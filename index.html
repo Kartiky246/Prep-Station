@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30-Day Prep &middot; Kartikey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brandrow">
+      <div>
+        <div class="eyebrow">30-Day Sprint</div>
+        <h1>Frontend SDE-2 Prep</h1>
+        <div class="sub">JS output-based, DSA &amp; machine coding</div>
+      </div>
+      <button class="themebtn" id="themeBtn" onclick="toggleTheme()" title="Toggle light / dark" aria-label="Toggle theme">&#9789;</button>
+    </div>
+
+    <div class="gridcard">
+      <div class="gridtop">
+        <span class="lbl">Days completed &mdash; tap a day to open it</span>
+        <span class="count mono"><b id="gDone">0</b> / 30</span>
+      </div>
+      <div class="daygrid" id="dayGrid"></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-plan" onclick="showView('plan')">Full Plan</button>
+      <button class="tab" id="tab-track" onclick="showView('track')">Daily Tracker</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="view-plan" class="fade"></div>
+    <div id="view-track" class="hidden">
+      <div class="setup">
+        <div class="row">
+          <label class="fld" for="startDate">Your Day 1 start date</label>
+          <input type="date" id="startDate" onchange="setStart()">
+          <button class="btn" onclick="goToday()">Jump to today</button>
+          <span class="reset" onclick="resetAll()">reset progress</span>
+        </div>
+        <div class="hint">Each day shows only that day&rsquo;s planned tasks. Missed ones stay in their own day &mdash; nothing piles up. Everything is saved in this browser.</div>
+      </div>
+      <div id="trackerBody"></div>
+    </div>
+  </div>
+</main>
+
+<div class="noteoverlay" id="noteOverlay" onclick="closeNotes()"></div>
+<aside class="notepanel" id="notePanel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="noteTitle">
+  <div class="notehead">
+    <div class="htxt">
+      <div class="notekicker" id="noteKicker">Note</div>
+      <div class="notetitle" id="noteTitle"></div>
+      <div class="notemeta" id="noteMeta"></div>
+    </div>
+    <button class="noteclose" onclick="closeNotes()" aria-label="Close notes">&times;</button>
+  </div>
+  <div class="notebody">
+    <textarea id="noteText" spellcheck="false"
+      placeholder="How did you solve it? Key insight, edge cases, complexity, gotchas &mdash; whatever future-you needs."
+      oninput="onNoteInput()"></textarea>
+  </div>
+  <div class="notefoot">
+    <span class="notestatus" id="noteStatus"></span>
+    <button class="btn ghost" id="noteClear" onclick="clearNote()">Delete</button>
+    <button class="btn" onclick="closeNotes()">Done</button>
+  </div>
+</aside>
+
+<script src="plan-data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
