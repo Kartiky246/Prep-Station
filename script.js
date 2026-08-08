@@ -195,6 +195,122 @@ function renderTracker(){
   body.innerHTML = h;
 }
 
+/* ============ notes ============ */
+let noteId = null;        // task id currently open in the panel
+let noteTimer = null;     // debounce handle for autosave
+let noteReturnEl = null;  // element to restore focus to on close
+
+function saveNotes(){ localStorage.setItem(LS_NOTES, JSON.stringify(notes)); }
+function hasNote(id){ const n = notes[id]; return !!(n && n.t && n.t.trim()); }
+
+function refreshNoteBtn(id){
+  const noted = hasNote(id);
+  document.querySelectorAll('[data-note-id="'+id+'"]').forEach(b=>{
+    b.classList.toggle("has", noted);
+    b.title = noted ? "Edit your note" : "Add a note";
+    b.setAttribute("aria-label", noted ? "Edit note" : "Add note");
+  });
+}
+function setNoteStatus(txt, ok){
+  const el = document.getElementById("noteStatus");
+  el.textContent = txt;
+  el.classList.toggle("saved", !!ok);
+}
+function noteFootState(){
+  const n = notes[noteId];
+  document.getElementById("noteClear").disabled = !n;
+  if(n && n.u){
+    const when = new Date(n.u).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    setNoteStatus("edited "+when+" · autosaves", false);
+  } else {
+    setNoteStatus("autosaves as you type · esc to close", false);
+  }
+}
+
+function writeNote(){
+  if(!noteId) return;
+  const txt = document.getElementById("noteText").value;
+  if(txt.trim()) notes[noteId] = {t:txt, u:Date.now()};
+  else delete notes[noteId];
+  saveNotes();
+  refreshNoteBtn(noteId);
+}
+function onNoteInput(){
+  clearTimeout(noteTimer);
+  setNoteStatus("unsaved…", false);
+  noteTimer = setTimeout(()=>{ writeNote(); noteFootState(); setNoteStatus("saved ✓", true); }, 400);
+}
+function flushNote(){ clearTimeout(noteTimer); writeNote(); }
+
+function openNotes(id){
+  const meta = ITEM_INDEX[id];
+  if(!meta) return;
+  if(noteId && noteId!==id) flushNote();
+  noteId = id;
+  noteReturnEl = document.activeElement;
+
+  document.getElementById("noteKicker").textContent = "Day "+meta.day+" · "+meta.section;
+  document.getElementById("noteTitle").textContent = meta.item.label;
+  let m = "";
+  if(meta.item.diff) m += '<span class="diff '+meta.item.diff+'">'+meta.item.diff+'</span>';
+  if(meta.item.url) m += '<a href="'+meta.item.url+'" target="_blank" rel="noopener">open problem ↗</a>';
+  document.getElementById("noteMeta").innerHTML = m;
+
+  const ta = document.getElementById("noteText");
+  ta.value = (notes[id] && notes[id].t) || "";
+  noteFootState();
+
+  const panel = document.getElementById("notePanel");
+  panel.classList.add("open");
+  panel.setAttribute("aria-hidden","false");
+  document.getElementById("noteOverlay").classList.add("open");
+  document.body.classList.add("noscroll");
+  setTimeout(()=>{ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 240);
+}
+
+function closeNotes(){
+  if(!noteId) return;
+  flushNote();
+  const panel = document.getElementById("notePanel");
+  panel.classList.remove("open");
+  panel.setAttribute("aria-hidden","true");
+  document.getElementById("noteOverlay").classList.remove("open");
+  document.body.classList.remove("noscroll");
+  const back = noteReturnEl;
+  noteId = null; noteReturnEl = null;
+  if(back && document.contains(back)) back.focus();
+}
+
+function clearNote(){
+  if(!noteId || !notes[noteId]) return;
+  if(!confirm("Delete this note?")) return;
+  clearTimeout(noteTimer);
+  delete notes[noteId];
+  saveNotes();
+  refreshNoteBtn(noteId);
+  const ta = document.getElementById("noteText");
+  ta.value = "";
+  noteFootState();
+  ta.focus();
+}
+
+document.addEventListener("keydown", e=>{
+  if(!noteId) return;
+  if(e.key==="Escape"){ closeNotes(); return; }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="s"){
+    e.preventDefault(); flushNote(); noteFootState(); setNoteStatus("saved ✓", true);
+  }
+});
+// Tab indents inside the note instead of leaving the field — notes often hold code.
+document.getElementById("noteText").addEventListener("keydown", e=>{
+  if(e.key!=="Tab" || e.shiftKey) return;
+  e.preventDefault();
+  const ta = e.target, a = ta.selectionStart, b = ta.selectionEnd;
+  ta.value = ta.value.slice(0,a) + "  " + ta.value.slice(b);
+  ta.selectionStart = ta.selectionEnd = a+2;
+  onNoteInput();
+});
+
 /* ============ view switch ============ */
 function showView(v){
   const plan = document.getElementById("view-plan");
